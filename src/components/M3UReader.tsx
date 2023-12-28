@@ -2,6 +2,11 @@ import React, { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import ModalUpload from "./ModalUpload";
 
+interface iFile {
+  seasons: number;
+  episodes: number;
+}
+
 const extractContentName = (fileContent: string): string | null => {
   const matches = fileContent.match(/tvg-name="([^"]+)"/g);
 
@@ -53,7 +58,10 @@ const M3UReader: React.FC = () => {
   }>({});
 
   const [hasError, setHasError] = useState(false);
-
+  const [errorsIndexState, setErrorsIndexState] = useState<number[]>([]);
+  const [selectedLine, setSelectedLine] = useState<string | null>(null);
+  const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
+  let actualErrorIndex = -1;
   const isValidEntry = (episodeInfo: string, contentName: string): boolean => {
     const regex = /S\d{2} E\d{2}/;
     const hasValidFormat = regex.test(episodeInfo);
@@ -83,7 +91,7 @@ const M3UReader: React.FC = () => {
         setFileContent(content);
 
         const extractedName = extractContentName(content);
-        console.log(extractedName);
+        //console.log(extractedName);
         setContentName(extractedName);
         setCurrentPage(1); // Resetando a página para a primeira ao carregar um novo arquivo
         setVideosEnabled({});
@@ -104,10 +112,24 @@ const M3UReader: React.FC = () => {
   };
 
   const toggleShowFullLine = (index: number) => {
-    setShowFullLines((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }));
+    setShowFullLines((prev) => {
+      const updatedShowFullLines = { ...prev };
+
+      Object.keys(updatedShowFullLines).forEach((key: any) => {
+        updatedShowFullLines[key] = false;
+      });
+
+      updatedShowFullLines[index] = !prev[index];
+
+      const adjustedIndex = index + (currentPage - 1) * itemsPerPage;
+      const fullLine = !prev[index]
+        ? fileContent?.split("#EXTINF:")[adjustedIndex + 1] || null
+        : null;
+
+      setSelectedLine(fullLine);
+
+      return updatedShowFullLines;
+    });
   };
 
   useEffect(() => {
@@ -125,19 +147,70 @@ const M3UReader: React.FC = () => {
 
   useEffect(() => {
     const slicedItems = fileContent
-      ? fileContent
-          .split("#EXTINF:")
-          .slice(1)
-          .slice(indexOfFirstItem, indexOfLastItem)
+      ? fileContent.split("#EXTINF:").slice(1)
       : [];
 
-    const result = slicedItems.find((episode) => {
+    console.debug(slicedItems.length, "lengt");
+
+    const errorsIndex: number[] = [];
+    const result = slicedItems.filter((episode, index) => {
       const fullLine = `#EXTINF:${episode}`;
+      if (!testAllFile(fullLine, contentName || "")) {
+        errorsIndex.push(index);
+      }
       return !testAllFile(fullLine, contentName || "");
     });
-    setHasError(result ? true : false);
-    console.log(result, "haserror");
 
+    setErrorsIndexState(errorsIndex);
+    setHasError(result.length > 0 ? true : false);
+    //console.log(result, "haserror");
+
+    const getSeasonAndEpisodeCounts = (): {
+      seasons: number;
+      episodes: number;
+    } => {
+      const episodesInfo = slicedItems.map((episode) => {
+        const lines = episode.split("\n").filter((line) => line.trim() !== "");
+        return lines[0].trim();
+      });
+
+      const episodesCount: { [key: string]: number } = {};
+
+      episodesInfo.forEach((episodeInfo) => {
+        const match = episodeInfo.match(/S(\d+)\s*E(\d+)/);
+
+        if (match) {
+          const season = parseInt(match[1], 10);
+          const episodeNumber = parseInt(match[2], 10);
+
+          const episodeKey = `S${season}E${episodeNumber}`;
+
+          if (episodesCount[episodeKey]) {
+            episodesCount[episodeKey]++;
+          } else {
+            episodesCount[episodeKey] = 1;
+          }
+        }
+      });
+
+      const uniqueEpisodes = Object.keys(episodesCount);
+
+      const seasons = new Set<number>();
+      uniqueEpisodes.forEach((episodeKey) => {
+        const match = episodeKey.match(/S(\d+)/);
+        if (match) {
+          const season = parseInt(match[1], 10);
+          seasons.add(season);
+        }
+      });
+
+      return {
+        seasons: seasons.size,
+        episodes: uniqueEpisodes.length,
+      };
+    };
+
+    setArchiveInfo(getSeasonAndEpisodeCounts);
     return () => {};
   }, [fileContent]);
 
@@ -243,6 +316,8 @@ const M3UReader: React.FC = () => {
     setHasError(false);
     setCurrentPage(1);
     setContentName("");
+    setErrorsIndexState([]);
+    actualErrorIndex = -1;
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -260,13 +335,101 @@ const M3UReader: React.FC = () => {
     openModal();
   };
 
+  const goToError = () => {
+    if (actualErrorIndex === -1) {
+      actualErrorIndex = 0;
+    }
+    const totalPages = Math.ceil(
+      fileContent
+        ? (fileContent.split("#EXTINF:").length - 1) / itemsPerPage
+        : 0
+    );
+    const adjustedIndex = errorsIndexState[actualErrorIndex];
+    console.debug(
+      actualErrorIndex,
+      "actualErrorIndex",
+      errorsIndexState,
+      "errorsIndexState"
+    );
+    const page = Math.floor(adjustedIndex / itemsPerPage) + 1;
+    const positionOnPage = (adjustedIndex % itemsPerPage) + 1;
+
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+
+      const elementId = `linha-${positionOnPage - 1}`;
+      console.debug("Scrolling to ", elementId);
+
+      //console.log(`linha-${positionOnPage}`);
+      setTimeout(() => {
+        const errorElement = document.getElementById(elementId);
+
+        if (errorElement) {
+          errorElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center",
+          });
+        }
+      }, 100);
+
+      if (errorsIndexState.length > actualErrorIndex) {
+        actualErrorIndex++;
+      }
+    } else {
+      console.debug("Erro: Página inválida");
+    }
+  };
+
+  const handleSaveLine = (index: number) => {
+    const adjustedIndex = index + (currentPage - 1) * itemsPerPage;
+
+    if (fileContent) {
+      const lines = fileContent.split("#EXTINF:");
+      lines[adjustedIndex + 1] = selectedLine || "";
+
+      const updatedFileContent = lines.join("#EXTINF:");
+      setFileContent(updatedFileContent);
+
+      const newUpdatedFileContent = updatedFileContent.replace(
+        `#EXTINF:${selectedLine}`,
+        `#EXTINF:${selectedLine}`
+      );
+
+      const updatedFile = new Blob([newUpdatedFileContent], {
+        type: "text/plain",
+      });
+
+      setUploadedFile(new File([updatedFile], "modified_playlist.m3u"));
+
+      setSelectedLine(null);
+    }
+  };
+
+  const saveToFile = (updatedContent: string) => {
+    const blob = new Blob([updatedContent], { type: "application/x-mpegURL" });
+    const fileName = "updated_m3u.m3u";
+
+    // Cria um objeto URL temporário e cria um link para fazer o download do arquivo
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+
+    // Simula um clique no link para iniciar o download
+    link.click();
+
+    // Libera o objeto URL temporário
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <div className="relative  flex flex-col justify-center items-center py-3 gap-3">
         <div className="flex flex-wrap gap-4 w-2/3 justify-center items-center">
           <div>
             <h1 className="font-bold text-5xl">Warez Add Content</h1>
-            <span className="text-xs">Powered by Ezequiel Magalhães</span>
+            <span className="text-xs">Powered by Ezeq</span>
           </div>
           {!fileContent && (
             <div className="w-full flex flex-col justify-center items-center gap-3">
@@ -314,6 +477,14 @@ const M3UReader: React.FC = () => {
             <div className="w-full sticky top-0 bg-white border border-solid py-3 flex justify-between px-3 items-center flex-wrap">
               <div className="flex flex-col">
                 <h1 className=" text-2xl font-bold ">{contentName}</h1>
+                <span>Qtd. Temporadas: {archiveInfo?.seasons}</span>
+                <span>Qtd. Episódios: {archiveInfo?.episodes}</span>
+                <a
+                  className="mt-2 hover:text-green-500 cursor-pointer"
+                  onClick={() => saveToFile(fileContent)}
+                >
+                  Baixar arquivo
+                </a>
               </div>
               <div className="flex flex-col justify-center items-center">
                 <button
@@ -342,8 +513,12 @@ const M3UReader: React.FC = () => {
                   className={`mt-4 bg-blue-500 ${
                     hasError ? "bg-red-400" : ""
                   } text-white px-4 py-2 rounded`}
-                  onClick={() => handleFileUpload(uploadedFile as File)}
-                  disabled={hasError}
+                  onClick={
+                    hasError
+                      ? () => goToError()
+                      : () => handleFileUpload(uploadedFile as File)
+                  }
+                  //disabled={hasError}
                 >
                   <span>
                     {hasError ? "Arquivo com erros!" : "Postar Arquivo"}
@@ -362,7 +537,7 @@ const M3UReader: React.FC = () => {
             const isValid = isValidEntry(fullLine, contentName || "");
 
             const formattedEpisodeInfo = () => {
-              const match = episodeInfo.match(/S(\d{2})\s*E(\d{2})/);
+              const match = episodeInfo.match(/S(\d+)\s*E(\d+)/);
 
               if (match) {
                 const season = match[1];
@@ -375,7 +550,8 @@ const M3UReader: React.FC = () => {
             };
 
             return (
-              <div
+              <section
+                id={`linha-${index}`}
                 key={index}
                 className={`border rounded p-4 w-full shadow-md ${
                   isValid ? "bg-green-500" : "bg-red-500"
@@ -413,18 +589,28 @@ const M3UReader: React.FC = () => {
                   >
                     Mostrar Linha Completa
                   </button>
-                  {showFullLines[index] && (
-                    <div className=" px-2 bg-white py-4 rounded-lg">
-                      <span className="text-black  text-wrap break-words">
-                        {fullLine}
-                      </span>
+                  {showFullLines[index] && selectedLine && (
+                    <div className="px-2 bg-white py-4 rounded-lg">
+                      <textarea
+                        value={selectedLine}
+                        onChange={(e) => setSelectedLine(e.target.value)}
+                        className="w-full h-20 p-2 border border-gray-300 rounded-md"
+                      />
+                      <button
+                        onClick={() => handleSaveLine(index)}
+                        className="bg-green-500 text-white px-4 py-2 rounded mt-2"
+                      >
+                        Salvar Alterações
+                      </button>
                     </div>
                   )}
                   <div className="w-full justify-end items-end text-end">
-                    <span>Linha {index + 1}</span>
+                    <span className="text-white font-semibold">
+                      Linha {1+ index + (currentPage - 1) * itemsPerPage}
+                    </span>
                   </div>
                 </div>
-              </div>
+              </section>
             );
           })}
         </div>
