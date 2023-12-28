@@ -82,24 +82,31 @@ const M3UReader: React.FC = () => {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
-    setUploadedFile(file);
-    const reader = new FileReader();
 
-    reader.onload = (event) => {
-      if (event.target) {
-        const content = event.target.result as string;
-        setFileContent(content);
+    // Verificar a extensão do arquivo
+    if (file && file.name.toLowerCase().endsWith(".m3u")) {
+      setUploadedFile(file);
+      const reader = new FileReader();
 
-        const extractedName = extractContentName(content);
-        //console.log(extractedName);
-        setContentName(extractedName);
-        setCurrentPage(1); // Resetando a página para a primeira ao carregar um novo arquivo
-        setVideosEnabled({});
-        setShowFullLines({});
-      }
-    };
+      reader.onload = (event) => {
+        if (event.target) {
+          const content = event.target.result as string;
+          setFileContent(content);
 
-    reader.readAsText(file);
+          const extractedName = extractContentName(content);
+          setContentName(extractedName);
+          setCurrentPage(1); 
+          setVideosEnabled({});
+          setShowFullLines({});
+        }
+      };
+
+      reader.readAsText(file);
+    } else {
+      alert(
+        "Formato de arquivo não suportado. Por favor, escolha um arquivo M3U."
+      );
+    }
   }, []);
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop });
@@ -134,7 +141,7 @@ const M3UReader: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [itemsPerPage]); // Resetando a página quando a quantidade de itens por página é alterada
+  }, [itemsPerPage]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -419,7 +426,7 @@ const M3UReader: React.FC = () => {
 
   return (
     <>
-      <div className="relative  flex flex-col justify-center items-center py-3 gap-3">
+      <div className="relative  flex flex-col justify-center items-center py-3 gap-3 min-h-screen">
         <div className="flex flex-wrap gap-4 w-2/3 justify-center items-center">
           <div>
             <h1 className="font-bold text-5xl">Warez Add Content</h1>
