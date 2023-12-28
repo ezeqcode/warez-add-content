@@ -61,7 +61,7 @@ const M3UReader: React.FC = () => {
   const [errorsIndexState, setErrorsIndexState] = useState<number[]>([]);
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
-  let actualErrorIndex = -1;
+  const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
   const isValidEntry = (episodeInfo: string, contentName: string): boolean => {
     const regex = /S\d{2} E\d{2}/;
     const hasValidFormat = regex.test(episodeInfo);
@@ -317,7 +317,7 @@ const M3UReader: React.FC = () => {
     setCurrentPage(1);
     setContentName("");
     setErrorsIndexState([]);
-    actualErrorIndex = -1;
+    setActualErrorIndex(-1);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -336,21 +336,17 @@ const M3UReader: React.FC = () => {
   };
 
   const goToError = () => {
-    if (actualErrorIndex === -1) {
-      actualErrorIndex = 0;
-    }
+    let auxErrorIndex = actualErrorIndex;
+
+    auxErrorIndex =
+      auxErrorIndex + 1 > errorsIndexState.length - 1 ? 0 : auxErrorIndex + 1;
+
     const totalPages = Math.ceil(
       fileContent
         ? (fileContent.split("#EXTINF:").length - 1) / itemsPerPage
         : 0
     );
-    const adjustedIndex = errorsIndexState[actualErrorIndex];
-    console.debug(
-      actualErrorIndex,
-      "actualErrorIndex",
-      errorsIndexState,
-      "errorsIndexState"
-    );
+    const adjustedIndex = errorsIndexState[auxErrorIndex];
     const page = Math.floor(adjustedIndex / itemsPerPage) + 1;
     const positionOnPage = (adjustedIndex % itemsPerPage) + 1;
 
@@ -360,7 +356,6 @@ const M3UReader: React.FC = () => {
       const elementId = `linha-${positionOnPage - 1}`;
       console.debug("Scrolling to ", elementId);
 
-      //console.log(`linha-${positionOnPage}`);
       setTimeout(() => {
         const errorElement = document.getElementById(elementId);
 
@@ -371,11 +366,10 @@ const M3UReader: React.FC = () => {
             inline: "center",
           });
         }
-      }, 100);
+      }, 150);
 
-      if (errorsIndexState.length > actualErrorIndex) {
-        actualErrorIndex++;
-      }
+      setActualErrorIndex(auxErrorIndex);
+      return;
     } else {
       console.debug("Erro: Página inválida");
     }
@@ -520,8 +514,18 @@ const M3UReader: React.FC = () => {
                   }
                   //disabled={hasError}
                 >
+                  <span>{!hasError && "Postar Arquivo"}</span>
                   <span>
-                    {hasError ? "Arquivo com erros!" : "Postar Arquivo"}
+                    {hasError &&
+                      actualErrorIndex === -1 &&
+                      `Arquivo com erros! (${errorsIndexState.length})`}
+                  </span>
+                  <span>
+                    {hasError &&
+                      actualErrorIndex !== -1 &&
+                      `Próximo Erro (${actualErrorIndex + 1}/${
+                        errorsIndexState.length
+                      })`}
                   </span>
                 </button>
               </div>
@@ -606,7 +610,7 @@ const M3UReader: React.FC = () => {
                   )}
                   <div className="w-full justify-end items-end text-end">
                     <span className="text-white font-semibold">
-                      Linha {1+ index + (currentPage - 1) * itemsPerPage}
+                      Linha {1 + index + (currentPage - 1) * itemsPerPage}
                     </span>
                   </div>
                 </div>
