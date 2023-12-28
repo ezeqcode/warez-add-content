@@ -63,21 +63,21 @@ const M3UReader: React.FC = () => {
   const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
   const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
   const isValidEntry = (episodeInfo: string, contentName: string): boolean => {
-    const regex = /S\d{2} E\d{2}/;
-    const hasValidFormat = regex.test(episodeInfo);
+    const regex = /S(\d+)E(\d+)/;
+    const hasInValidFormat = regex.test(episodeInfo);
 
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
-    return hasValidFormat && isInTvgName && isInEndOfLine;
+    return !hasInValidFormat && isInTvgName && isInEndOfLine;
   };
   const testAllFile = (episodeInfo: string, contentName: string): boolean => {
-    const regex = /S\d{2} E\d{2}/;
-    const hasValidFormat = regex.test(episodeInfo);
+    const regex = /S(\d+)E(\d+)/;
+    const hasInValidFormat = regex.test(episodeInfo);
 
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
 
-    return hasValidFormat && isInTvgName && isInEndOfLine;
+    return !hasInValidFormat && isInTvgName && isInEndOfLine;
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -95,7 +95,7 @@ const M3UReader: React.FC = () => {
 
           const extractedName = extractContentName(content);
           setContentName(extractedName);
-          setCurrentPage(1); 
+          setCurrentPage(1);
           setVideosEnabled({});
           setShowFullLines({});
         }
