@@ -133,6 +133,7 @@ const M3UReader: React.FC = () => {
           setFileContent(content);
 
           const extractedName = extractContentName(content);
+          console.debug("extractedName", extractedName)
           setContentName(extractedName);
           setCurrentPage(1);
           setVideosEnabled({});
@@ -516,7 +517,7 @@ const M3UReader: React.FC = () => {
           {fileContent && (
             <div className="w-full sticky top-0 bg-white border border-solid py-3 flex justify-between px-3 items-center flex-wrap">
               <div className="flex flex-col">
-                <h1 className=" text-2xl font-bold ">{contentName}</h1>
+                <h1 className={` text-2xl font-bold ${!contentName && "text-red-500"}`}>{contentName || "Nome inválido"}</h1>
                 <span>Qtd. Temporadas: {archiveInfo?.seasons}</span>
                 <span>Qtd. Episódios: {archiveInfo?.episodes}</span>
                 <a
