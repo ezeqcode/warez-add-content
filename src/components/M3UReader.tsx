@@ -605,7 +605,7 @@ const M3UReader: React.FC = () => {
                 id={`linha-${index}`}
                 key={index}
                 className={`border rounded p-4 w-full shadow-md ${
-                  isValid ? "bg-green-500" : "bg-red-500"
+                  isValid === true ? "bg-green-500" : "bg-red-500"
                 }`}
               >
                 <div className="flex justify-between items-center mb-2">
@@ -657,11 +657,11 @@ const M3UReader: React.FC = () => {
                   )}
 
                   {isValid && typeof isValid === "object" && (
-                    <div className="flex flex-col text-red-800">
+                    <div className="flex flex-col text-white gap-2">
                       <span className="font-bold">
                         Essa linha apresenta erros:{" "}
                       </span>
-                      <ol className="flex flex-col">
+                      <ol className="flex flex-col list-decimal	pl-4 text-black font-semibold">
                         {isValid.hasUnclosedQuote && (
                           <li>
                             O nome do conteúdo possuí aspas (simples ou duplas)
