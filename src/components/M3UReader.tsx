@@ -64,20 +64,25 @@ const M3UReader: React.FC = () => {
   const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
   const isValidEntry = (episodeInfo: string, contentName: string): boolean => {
     const regex = /S(\d+)E(\d+)/;
+    const regexCorretFormat = /S(\d+) E(\d+)/;
     const hasInValidFormat = regex.test(episodeInfo);
+    const hasValidFormat = regexCorretFormat.test(episodeInfo);
 
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
-    return !hasInValidFormat && isInTvgName && isInEndOfLine;
+    return !hasInValidFormat && isInTvgName && isInEndOfLine && hasValidFormat;
   };
   const testAllFile = (episodeInfo: string, contentName: string): boolean => {
     const regex = /S(\d+)E(\d+)/;
+    const regexCorretFormat = /S(\d+) E(\d+)/;
     const hasInValidFormat = regex.test(episodeInfo);
+    
+    const hasValidFormat = regexCorretFormat.test(episodeInfo);
 
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
 
-    return !hasInValidFormat && isInTvgName && isInEndOfLine;
+    return !hasInValidFormat && isInTvgName && isInEndOfLine && hasValidFormat;
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
