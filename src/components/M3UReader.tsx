@@ -62,27 +62,61 @@ const M3UReader: React.FC = () => {
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
   const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
-  const isValidEntry = (episodeInfo: string, contentName: string): boolean => {
+  const isValidEntry = (episodeInfo: string, contentName: string) => {
     const regex = /S(\d+)E(\d+)/;
     const regexCorretFormat = /S(\d+) E(\d+)/;
     const hasInValidFormat = regex.test(episodeInfo);
     const hasValidFormat = regexCorretFormat.test(episodeInfo);
-
+    const regexQuote = /'/g;
+    const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
-    return !hasInValidFormat && isInTvgName && isInEndOfLine && hasValidFormat;
+    console.debug(
+      !hasInValidFormat,
+      isInTvgName,
+      isInEndOfLine,
+      hasValidFormat,
+      !hasUnclosedQuote
+    );
+    return !hasInValidFormat &&
+      isInTvgName &&
+      isInEndOfLine &&
+      hasValidFormat &&
+      !hasUnclosedQuote
+      ? true
+      : {
+          hasInValidFormat,
+          isInTvgName,
+          isInEndOfLine,
+          hasValidFormat,
+          hasUnclosedQuote,
+        };
   };
   const testAllFile = (episodeInfo: string, contentName: string): boolean => {
     const regex = /S(\d+)E(\d+)/;
     const regexCorretFormat = /S(\d+) E(\d+)/;
     const hasInValidFormat = regex.test(episodeInfo);
-    
-    const hasValidFormat = regexCorretFormat.test(episodeInfo);
 
+    const hasValidFormat = regexCorretFormat.test(episodeInfo);
+    const regexQuote = /'/g;
+    const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
+    console.debug(
+      !hasInValidFormat,
+      isInTvgName,
+      isInEndOfLine,
+      hasValidFormat,
+      "testAllFile"
+    );
 
-    return !hasInValidFormat && isInTvgName && isInEndOfLine && hasValidFormat;
+    return (
+      !hasInValidFormat &&
+      isInTvgName &&
+      isInEndOfLine &&
+      hasValidFormat &&
+      !hasUnclosedQuote
+    );
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -551,7 +585,7 @@ const M3UReader: React.FC = () => {
             const videoUrl = lines[1].trim();
             const fullLine = `#EXTINF:${episode}`;
             const isValid = isValidEntry(fullLine, contentName || "");
-
+            console.log(isValid);
             const formattedEpisodeInfo = () => {
               const match = episodeInfo.match(/S(\d+)\s*E(\d+)/);
 
@@ -618,6 +652,38 @@ const M3UReader: React.FC = () => {
                       >
                         Salvar Alterações
                       </button>
+                    </div>
+                  )}
+
+                  {isValid && typeof isValid === "object" && (
+                    <div className="flex flex-col text-red-800">
+                      <span className="font-bold">
+                        Essa linha apresenta erros:{" "}
+                      </span>
+                      <ol className="flex flex-col">
+                        {isValid.hasUnclosedQuote && (
+                          <li>
+                            O nome do conteúdo possuí aspas (simples ou duplas)
+                            solo.
+                          </li>
+                        )}
+                        {isValid.hasInValidFormat && (
+                          <li>
+                            A parte que representa temporada e episódio está
+                            incorreta.
+                          </li>
+                        )}
+                        {!isValid.isInTvgName && (
+                          <li>
+                            Em tv-name não foi encontrado o nome do conteúdo.
+                          </li>
+                        )}
+                        {!isValid.isInEndOfLine && (
+                          <li>
+                            Antes da url não foi encontrado o nome do conteúdo.
+                          </li>
+                        )}
+                      </ol>
                     </div>
                   )}
                   <div className="w-full justify-end items-end text-end">
