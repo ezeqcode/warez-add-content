@@ -63,29 +63,26 @@ const M3UReader: React.FC = () => {
   const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
   const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
   const isValidEntry = (episodeInfo: string, contentName: string) => {
-    const regex = /S(\d+)E(\d+)/;
     const regexCorretFormat = /S(\d+) E(\d+)/;
-    const hasInValidFormat = regex.test(episodeInfo);
-    const hasValidFormat = regexCorretFormat.test(episodeInfo);
+
+    const sliptedLine = episodeInfo.split("group-title");
+
+    const hasValidFormat =
+      regexCorretFormat.test(sliptedLine[0]) &&
+      regexCorretFormat.test(sliptedLine[1]);
     const regexQuote = /'/g;
     const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
     console.debug(
-      !hasInValidFormat,
       isInTvgName,
       isInEndOfLine,
       hasValidFormat,
       !hasUnclosedQuote
     );
-    return !hasInValidFormat &&
-      isInTvgName &&
-      isInEndOfLine &&
-      hasValidFormat &&
-      !hasUnclosedQuote
+    return isInTvgName && isInEndOfLine && hasValidFormat && !hasUnclosedQuote
       ? true
       : {
-          hasInValidFormat,
           isInTvgName,
           isInEndOfLine,
           hasValidFormat,
@@ -93,30 +90,19 @@ const M3UReader: React.FC = () => {
         };
   };
   const testAllFile = (episodeInfo: string, contentName: string): boolean => {
-    const regex = /S(\d+)E(\d+)/;
     const regexCorretFormat = /S(\d+) E(\d+)/;
-    const hasInValidFormat = regex.test(episodeInfo);
+    const sliptedLine = episodeInfo.split("group-title");
 
-    const hasValidFormat = regexCorretFormat.test(episodeInfo);
+    const hasValidFormat =
+      regexCorretFormat.test(sliptedLine[0]) &&
+      regexCorretFormat.test(sliptedLine[1]);
     const regexQuote = /'/g;
     const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
-    console.debug(
-      !hasInValidFormat,
-      isInTvgName,
-      isInEndOfLine,
-      hasValidFormat,
-      "testAllFile"
-    );
+    console.debug(isInTvgName, isInEndOfLine, hasValidFormat, "testAllFile");
 
-    return (
-      !hasInValidFormat &&
-      isInTvgName &&
-      isInEndOfLine &&
-      hasValidFormat &&
-      !hasUnclosedQuote
-    );
+    return isInTvgName && isInEndOfLine && hasValidFormat && !hasUnclosedQuote;
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -133,7 +119,7 @@ const M3UReader: React.FC = () => {
           setFileContent(content);
 
           const extractedName = extractContentName(content);
-          console.debug("extractedName", extractedName)
+          console.debug("extractedName", extractedName);
           setContentName(extractedName);
           setCurrentPage(1);
           setVideosEnabled({});
@@ -517,7 +503,13 @@ const M3UReader: React.FC = () => {
           {fileContent && (
             <div className="w-full sticky top-0 bg-white border border-solid py-3 flex justify-between px-3 items-center flex-wrap">
               <div className="flex flex-col">
-                <h1 className={` text-2xl font-bold ${!contentName && "text-red-500"}`}>{contentName || "Nome inválido"}</h1>
+                <h1
+                  className={` text-2xl font-bold ${
+                    !contentName && "text-red-500"
+                  }`}
+                >
+                  {contentName || "Nome inválido"}
+                </h1>
                 <span>Qtd. Temporadas: {archiveInfo?.seasons}</span>
                 <span>Qtd. Episódios: {archiveInfo?.episodes}</span>
                 <a
@@ -668,7 +660,7 @@ const M3UReader: React.FC = () => {
                             solo.
                           </li>
                         )}
-                        {isValid.hasInValidFormat && (
+                        {!isValid.hasValidFormat && (
                           <li>
                             A parte que representa temporada e episódio está
                             incorreta.
