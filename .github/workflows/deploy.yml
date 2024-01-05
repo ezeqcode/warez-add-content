@@ -56,10 +56,10 @@ jobs:
         run: ls
 
       - name: Install Dependencies
-        run: npm install
+        run: yarn
 
       - name: Build Application
-        run: npm run build
+        run: yarn build
     
       - name: list folders AFTER BUILD
         run: ls
