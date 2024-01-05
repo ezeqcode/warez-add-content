@@ -51,3 +51,16 @@ jobs:
           REMOTE_USER: ${{ vars.REMOTE_USER }}
           REMOTE_PORT: ${{ vars.REMOTE_PORT }}
           TARGET: ${{ vars.TARGET }}
+
+
+      - name: list folders
+        run: ls
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
+        run: npm run build
+    
+      - name: list folders AFTER BUILD
+        run: ls
