@@ -19,11 +19,14 @@ jobs:
         with:
           node-version: 14
 
+      - name: list folders
+        run: ls
+
       - name: Install Dependencies
-        run: cd .. && npm install
+        run: npm install
 
       - name: Build Application
-        run: cd .. && npm run build
+        run: npm run build
 
   deploy-prod:
     runs-on: ubuntu-latest
