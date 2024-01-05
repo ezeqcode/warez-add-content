@@ -20,7 +20,7 @@ jobs:
           node-version: 14
 
       - name: Install Dependencies
-        run: npm install
+        run: cd .. && npm install
 
       - name: Build Application
         run: npm run build
