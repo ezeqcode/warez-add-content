@@ -456,7 +456,8 @@ const M3UReader: React.FC = () => {
         <div className="flex flex-wrap gap-4 w-2/3 justify-center items-center">
           <div>
             <h1 className="font-bold text-5xl">Warez Add Content</h1>
-            <span className="text-xs">Powered by Ezeq</span>
+            <span className="text-xs">Powered by Eze</span>
+            <span className="text-xs">@Versão 1.2.0</span>
           </div>
           {!fileContent && (
             <div className="w-full flex flex-col justify-center items-center gap-3">
