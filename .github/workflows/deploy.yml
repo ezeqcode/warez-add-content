@@ -5,14 +5,24 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
-
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Build Aplication
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
         run: npm run build
 
   deploy-prod:
@@ -22,8 +32,9 @@ jobs:
       url: http://149.56.205.234
     needs: build
     steps:
-      - name: Repo Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v3
+
       - name: Vps Deployment
         uses: easingthemes/ssh-deploy@main
         with:
