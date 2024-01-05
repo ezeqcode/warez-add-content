@@ -23,7 +23,7 @@ jobs:
         run: cd .. && npm install
 
       - name: Build Application
-        run: npm run build
+        run: cd .. && npm run build
 
   deploy-prod:
     runs-on: ubuntu-latest
