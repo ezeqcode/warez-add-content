@@ -27,6 +27,9 @@ jobs:
 
       - name: Build Application
         run: npm run build
+    
+      - name: list folders AFTER BUILD
+        run: ls
 
   deploy-prod:
     runs-on: ubuntu-latest
@@ -43,7 +46,7 @@ jobs:
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
           ARGS: "-rlgoDz --delete"
-          SOURCE: "dist/"
+          SOURCE: "./"
           REMOTE_HOST: ${{ vars.REMOTE_HOST }}
           REMOTE_USER: ${{ vars.REMOTE_USER }}
           REMOTE_PORT: ${{ vars.REMOTE_PORT }}
