@@ -2,9 +2,9 @@ name: deploy
 
 on:
   push:
-    branches: [Refactory, Dev]
+    branches: [master]
   pull_request:
-    branches: [Refactory, Dev]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
