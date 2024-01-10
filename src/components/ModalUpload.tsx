@@ -50,7 +50,7 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
       for (let index = 0; index < file.length; index++) {
         const notifyPromise = new Promise(async (resolve, reject) => {
           try {
-            const result = await uploadFile(values.id, file[index].content);
+            const result = await uploadFile(values.id, file[index].content, false);
             
             console.log(new Date());
           
