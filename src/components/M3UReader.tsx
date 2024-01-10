@@ -1,11 +1,15 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import ModalUpload from "./ModalUpload";
+import notify from "../utils/notification";
+import { FilePart } from "../utils/IFileParts";
 
 interface iFile {
   seasons: number;
   episodes: number;
 }
+
+const MIN_EPISODES_QUANTITY = 50;
 
 const extractContentName = (fileContent: string): string | null => {
   const matches = fileContent.match(/tvg-name="([^"]+)"/g);
@@ -46,7 +50,7 @@ const extractContentName = (fileContent: string): string | null => {
 
 const M3UReader: React.FC = () => {
   const [fileContent, setFileContent] = useState<string | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | FilePart[] | null>(null);
   const [videosEnabled, setVideosEnabled] = useState<{
     [key: number]: boolean;
   }>({});
@@ -62,6 +66,9 @@ const M3UReader: React.FC = () => {
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
   const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
+
+  const [filesParts, setFilesParts] = useState<string[] | null>(null);
+
   const isValidEntry = (episodeInfo: string, contentName: string) => {
     const regexCorretFormat = /S(\d+) E(\d+)/;
 
@@ -178,6 +185,51 @@ const M3UReader: React.FC = () => {
         .slice(indexOfFirstItem, indexOfLastItem)
     : [];
 
+  const splitFileIntoParts = (
+    fileContent: string | null,
+    episodesPerPart: number
+  ) => {
+    if (!fileContent) return [];
+    const episodes = fileContent.split("#EXTINF:").slice(1);
+    const totalEpisodes = episodes.length;
+
+    if (totalEpisodes === 0) {
+      console.error("No episodes found in the file.");
+      return [];
+    }
+
+    const totalParts = Math.ceil(totalEpisodes / episodesPerPart);
+    const parts: string[] = [];
+
+    for (let i = 0; i < totalParts; i++) {
+      const startIndex = i * episodesPerPart;
+      const endIndex = (i + 1) * episodesPerPart;
+      const partEpisodes = episodes.slice(startIndex, endIndex);
+
+      const partContent = `#EXTM3U\n#EXTINF:${partEpisodes.join("#EXTINF:")}`;
+      parts.push(partContent);
+    }
+
+    setFilesParts(parts);
+
+    const uploadedFileParts: FilePart[] = [];
+
+    parts.forEach((part, index) => {
+      const updatedFile = new Blob([part], {
+        type: "text/plain",
+      });
+
+      uploadedFileParts.push(
+        {
+          name: `Part ${index + 1}`,
+          content:  new File([updatedFile], `part-${index+1}.m3u`),
+          isChecked: true,
+        }
+       );
+    });
+    setUploadedFile(uploadedFileParts)
+  };
+
   useEffect(() => {
     const slicedItems = fileContent
       ? fileContent.split("#EXTINF:").slice(1)
@@ -236,6 +288,11 @@ const M3UReader: React.FC = () => {
           seasons.add(season);
         }
       });
+
+      if (uniqueEpisodes.length > 40) {
+        notify("Arquivo extenso detectado! Iniciando processo de fragmentação");
+        splitFileIntoParts(fileContent, MIN_EPISODES_QUANTITY);
+      }
 
       return {
         seasons: seasons.size,
@@ -437,16 +494,13 @@ const M3UReader: React.FC = () => {
     const blob = new Blob([updatedContent], { type: "application/x-mpegURL" });
     const fileName = "updated_m3u.m3u";
 
-    // Cria um objeto URL temporário e cria um link para fazer o download do arquivo
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.download = fileName;
 
-    // Simula um clique no link para iniciar o download
     link.click();
 
-    // Libera o objeto URL temporário
     window.URL.revokeObjectURL(url);
   };
 
@@ -513,12 +567,32 @@ const M3UReader: React.FC = () => {
                 </h1>
                 <span>Qtd. Temporadas: {archiveInfo?.seasons}</span>
                 <span>Qtd. Episódios: {archiveInfo?.episodes}</span>
-                <a
-                  className="mt-2 hover:text-green-500 cursor-pointer"
-                  onClick={() => saveToFile(fileContent)}
-                >
-                  Baixar arquivo
-                </a>
+                {!filesParts && (
+                  <a
+                    className="mt-2 hover:text-green-500 cursor-pointer"
+                    onClick={() => saveToFile(fileContent)}
+                  >
+                    Baixar arquivo
+                  </a>
+                )}
+                {filesParts && (
+                  <div className="flex gap-2 mt-2">
+                    {filesParts.map((piece, index) => (
+                      <>
+                        <a
+                          className="mt-2 hover:text-green-500 cursor-pointer flex flex-col justify-center items-center"
+                          onClick={() => saveToFile(piece)}
+                          key={index}
+                        >
+                          <span>#PARTE {index + 1}</span>
+                          Baixar arquivo
+                        </a>
+
+                        <div className="border border-solid" />
+                      </>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex flex-col justify-center items-center">
                 <button
