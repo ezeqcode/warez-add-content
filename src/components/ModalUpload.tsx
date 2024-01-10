@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Form, Field, ErrorMessage, Formik } from "formik";
 import * as Yup from "yup"; // Certifique-se de ter o Yup instalado: npm install yup
 import { uploadFile } from "../services/uploadContent";
+import { FilePart } from "../utils/IFileParts";
+import notify from "../utils/notification";
 
 interface ModalUploadProps {
   onClose: () => void;
   onUploadSuccess: () => void;
   contentName: string;
-  file: File | null;
+  file: File | FilePart[] | null;
 }
 
 const ModalUploadSchema = Yup.object().shape({
   id: Yup.string().required("O ID é obrigatório"),
 });
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const ModalUpload: React.FC<ModalUploadProps> = ({
   onClose,
@@ -21,27 +24,63 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
   file,
 }) => {
   const initialValues = { id: "" };
+  const [fileParts, setFileParts] = useState<FilePart[]>(
+    Array.isArray(file) ? file : []
+  );
+
+  const handleCheckboxChange = (index: number) => {
+    setFileParts((prevFileParts) => {
+      const updatedFileParts = [...prevFileParts];
+      updatedFileParts[index] = {
+        ...updatedFileParts[index],
+        isChecked: !updatedFileParts[index].isChecked,
+      };
+      return updatedFileParts;
+    });
+  };
 
   const onSubmitForm = async (values: typeof initialValues) => {
     try {
-      if (file) {
+      if (!file) return;
+      if (!Array.isArray(file)) {
         await uploadFile(values.id, file);
-        onUploadSuccess();
+        return onUploadSuccess();
       }
+
+      for (let index = 0; index < file.length; index++) {
+        const notifyPromise = new Promise(async (resolve, reject) => {
+          try {
+            const result = await uploadFile(values.id, file[index].content, false);
+            
+            console.log(new Date());
+          
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        });
+        notify(`Parte ${index + 1}`, "promise", notifyPromise);
+        if(index !== file.length -2){
+          notify('Avançando para próxima etapa')
+        }
+        await delay(3000);
+      }
+      return onUploadSuccess();
     } catch (error) {
       console.error("Erro ao postar arquivo:", error);
     }
   };
 
   return (
-    <div className="fixed  z-50 top-0  mx-auto w-full h-full flex justify-center items-center bg-white bg-opacity-60">
-      <div className="p-4 bg-white rounded-lg">
+    <div className="fixed  z-50 top-0  mx-auto w-full h-full flex justify-center items-center bg-white bg-opacity-60 ">
+      <div className="p-4 bg-white rounded-lg ">
         <h1 className="text-xl font-bold mb-2">{contentName}</h1>
-        {file && (
+        {file && !Array.isArray(file) && (
           <div className="mb-4">
             <strong>Nome do Arquivo:</strong> {file.name}
           </div>
         )}
+
         <Formik
           initialValues={{
             id: "",
@@ -50,7 +89,30 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
           validationSchema={ModalUploadSchema}
         >
           <Form>
-            <div className="mb-4">
+            {fileParts && Array.isArray(fileParts) && (
+              <div className="flex flex-col gap-2">
+                <p className="font-semibold italic text-red-400 max-w-full">
+                  Obs: Seu arquivo foi fragmentado devido a <br /> quantidade de
+                  episódios. Não se preocupe!😉
+                </p>
+                <span>Selecione quais partes gostaria de fazer upload: </span>
+                <div className="flex gap-3 flex-wrap">
+                  {fileParts.map((part, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={part.isChecked}
+                        onChange={() => handleCheckboxChange(index)}
+                      />
+                      <span>
+                        <strong>Parte:</strong> {index + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="mb-4 mt-2">
               <label
                 htmlFor="id"
                 className="block text-sm font-medium text-gray-700"
