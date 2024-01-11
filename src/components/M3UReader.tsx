@@ -50,7 +50,9 @@ const extractContentName = (fileContent: string): string | null => {
 
 const M3UReader: React.FC = () => {
   const [fileContent, setFileContent] = useState<string | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | FilePart[] | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | FilePart[] | null>(
+    null
+  );
   const [videosEnabled, setVideosEnabled] = useState<{
     [key: number]: boolean;
   }>({});
@@ -219,15 +221,13 @@ const M3UReader: React.FC = () => {
         type: "text/plain",
       });
 
-      uploadedFileParts.push(
-        {
-          name: `Part ${index + 1}`,
-          content:  new File([updatedFile], `part-${index+1}.m3u`),
-          isChecked: true,
-        }
-       );
+      uploadedFileParts.push({
+        name: `Part ${index + 1}`,
+        content: new File([updatedFile], `part-${index + 1}.m3u`),
+        isChecked: true,
+      });
     });
-    setUploadedFile(uploadedFileParts)
+    setUploadedFile(uploadedFileParts);
   };
 
   useEffect(() => {
@@ -575,24 +575,26 @@ const M3UReader: React.FC = () => {
                     Baixar arquivo
                   </a>
                 )}
-                {filesParts && (
-                  <div className="flex gap-2 mt-2">
-                    {filesParts.map((piece, index) => (
-                      <>
-                        <a
-                          className="mt-2 hover:text-green-500 cursor-pointer flex flex-col justify-center items-center"
-                          onClick={() => saveToFile(piece)}
-                          key={index}
-                        >
-                          <span>#PARTE {index + 1}</span>
-                          Baixar arquivo
-                        </a>
+                <div className="flex max-w-[60vw] overflow-auto p-4">
+                  {filesParts && (
+                    <div className="flex gap-4 mt-2">
+                      {filesParts.map((piece, index) => (
+                        <>
+                          <a
+                            className="mt-2 hover:text-green-500 cursor-pointer flex flex-col justify-center items-center text-center"
+                            onClick={() => saveToFile(piece)}
+                            key={index}
+                          >
+                            <span className="whitespace-nowrap">#PARTE {index + 1}</span>
+                            Baixar arquivo
+                          </a>
 
-                        <div className="border border-solid" />
-                      </>
-                    ))}
-                  </div>
-                )}
+                          <div className="border border-solid" />
+                        </>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex flex-col justify-center items-center">
                 <button
