@@ -26,7 +26,8 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
   const initialValues = { id: "" };
   const [fileParts, setFileParts] = useState<FilePart[]>(
     Array.isArray(file) ? file : []
-  );
+    );
+    console.log(file, "file", fileParts)
 
   const handleCheckboxChange = (index: number) => {
     setFileParts((prevFileParts) => {
@@ -94,7 +95,7 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
         >
           {({ isSubmitting }) => (
             <Form>
-              {fileParts && Array.isArray(fileParts) && (
+              {fileParts && fileParts.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <p className="font-semibold italic text-red-400 max-w-full">
                     Obs: Seu arquivo foi fragmentado devido a <br /> quantidade
