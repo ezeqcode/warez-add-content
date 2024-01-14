@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Field, ErrorMessage, Formik } from "formik";
 import * as Yup from "yup"; // Certifique-se de ter o Yup instalado: npm install yup
 import { uploadFile } from "../services/uploadContent";
 import { FilePart } from "../utils/IFileParts";
 import notify from "../utils/notification";
+import { useSearchParams } from "react-router-dom";
 
 interface ModalUploadProps {
   onClose: () => void;
@@ -23,11 +24,16 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
   contentName,
   file,
 }) => {
+  const [searchParams] = useSearchParams();
   const initialValues = { id: "" };
   const [fileParts, setFileParts] = useState<FilePart[]>(
     Array.isArray(file) ? file : []
-    );
-    console.log(file, "file", fileParts)
+  );
+
+  const destiny = searchParams.get("destiny");
+
+  console.log(destiny, "desitin modal");
+  useEffect(() => {}, [searchParams]);
 
   const handleCheckboxChange = (index: number) => {
     setFileParts((prevFileParts) => {
@@ -44,7 +50,7 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
     try {
       if (!file) return;
       if (!Array.isArray(file)) {
-        await uploadFile(values.id, file);
+        await uploadFile(values.id, file, destiny || "warez");
         return onUploadSuccess();
       }
 
@@ -54,6 +60,7 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
             const result = await uploadFile(
               values.id,
               file[index].content,
+              destiny || "warez",
               false
             );
 
@@ -79,7 +86,10 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
   return (
     <div className="fixed  z-50 top-0  mx-auto w-full h-full flex justify-center items-center bg-white bg-opacity-60  ">
       <div className="p-4 bg-white rounded-lg max-w-[60vw] ">
-        <h1 className="text-xl font-bold mb-2">{contentName}</h1>
+        <h1 className="text-3xl font-bold mb-2 text-center uppercase">
+          {destiny || "warez"}
+        </h1>
+        <h2 className="text-xl font-bold mb-2">{contentName}</h2>
         {file && !Array.isArray(file) && (
           <div className="mb-4">
             <strong>Nome do Arquivo:</strong> {file.name}
@@ -97,9 +107,10 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
             <Form>
               {fileParts && fileParts.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="font-semibold italic text-red-400 max-w-full">
-                    Obs: Seu arquivo foi fragmentado devido a <br /> quantidade
-                    de episódios. Não se preocupe!😉
+                  <p className="font-semibold italic text-red-400 text-center ">
+                    Obs: A fragmentação do arquivo é a melhor forma de lidar com
+                    essa quantidade de episódios mas ainda pode apresentar
+                    conteúdos duplicados
                   </p>
                   <span>Selecione quais partes gostaria de fazer upload: </span>
                   <div className="flex gap-3 flex-wrap">
@@ -155,7 +166,7 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
                   className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Aguarde..." :  "Postar Arquivo"}
+                  {isSubmitting ? "Aguarde..." : "Postar Arquivo"}
                 </button>
               </div>
             </Form>

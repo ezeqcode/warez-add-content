@@ -3,6 +3,7 @@ import { useDropzone } from "react-dropzone";
 import ModalUpload from "./ModalUpload";
 import notify from "../utils/notification";
 import { FilePart } from "../utils/IFileParts";
+import { useSearchParams } from "react-router-dom";
 
 interface iFile {
   seasons: number;
@@ -23,7 +24,6 @@ const extractContentName = (fileContent: string): string | null => {
         .replace('"', "");
       return nameWithoutSeasonEpisode.replace(SEASON_EP_PATTERN, "").trim();
     });
-    console.log(names, "names");
 
     const nameCounts: { [key: string]: number } = {};
 
@@ -56,6 +56,9 @@ const M3UReader: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | FilePart[] | null>(
     null
   );
+  const [uploadedFileBackup, setUploadedFileBackup] = useState<File | FilePart[] | null>(
+    null
+  );
   const [videosEnabled, setVideosEnabled] = useState<{
     [key: number]: boolean;
   }>({});
@@ -71,7 +74,8 @@ const M3UReader: React.FC = () => {
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
   const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [checked, setChecked] = React.useState(searchParams.get('destiny') === "tvs");
   const [filesParts, setFilesParts] = useState<string[] | null>(null);
 
   const isValidEntry = (episodeInfo: string, contentName: string) => {
@@ -112,7 +116,6 @@ const M3UReader: React.FC = () => {
     const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
-    console.debug(isInTvgName, isInEndOfLine, hasValidFormat, "testAllFile");
 
     return isInTvgName && isInEndOfLine && hasValidFormat && !hasUnclosedQuote;
   };
@@ -123,6 +126,7 @@ const M3UReader: React.FC = () => {
     // Verificar a extensão do arquivo
     if (file && file.name.toLowerCase().endsWith(".m3u")) {
       setUploadedFile(file);
+      setUploadedFileBackup(file);
       const reader = new FileReader();
 
       reader.onload = (event) => {
@@ -234,11 +238,11 @@ const M3UReader: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log("redo")
     const slicedItems = fileContent
       ? fileContent.split("#EXTINF:").slice(1)
       : [];
 
-    console.debug(slicedItems.length, "lengt");
 
     const errorsIndex: number[] = [];
     const result = slicedItems.filter((episode, index) => {
@@ -292,7 +296,7 @@ const M3UReader: React.FC = () => {
         }
       });
 
-      if (uniqueEpisodes.length > MIN_EPISODES_QUANTITY) {
+      if (uniqueEpisodes.length > MIN_EPISODES_QUANTITY && searchParams.get('destiny') === 'tvs') {
         notify("Arquivo extenso detectado! Iniciando processo de fragmentação");
         splitFileIntoParts(fileContent, MIN_EPISODES_QUANTITY);
       }
@@ -305,7 +309,7 @@ const M3UReader: React.FC = () => {
 
     setArchiveInfo(getSeasonAndEpisodeCounts);
     return () => {};
-  }, [fileContent]);
+  }, [fileContent, searchParams]);
 
   const totalPages = Math.ceil(
     fileContent ? (fileContent.split("#EXTINF:").length - 1) / itemsPerPage : 0
@@ -489,6 +493,7 @@ const M3UReader: React.FC = () => {
       });
 
       setUploadedFile(new File([updatedFile], "modified_playlist.m3u"));
+      setUploadedFileBackup(new File([updatedFile], "modified_playlist.m3u"));
 
       setSelectedLine(null);
     }
@@ -508,12 +513,52 @@ const M3UReader: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  useEffect(() => {
+    searchParams.set("destiny", "tvs");
+    if (!checked) {
+      searchParams.delete("destiny");
+      setFilesParts(null);
+      setUploadedFile(uploadedFileBackup);
+    }
+    setSearchParams(searchParams);
+  }, [searchParams, checked]);
+
   return (
     <>
       <div className="relative  flex flex-col justify-center items-center py-3 gap-3 min-h-screen">
         <div className="flex flex-wrap gap-4 w-2/3 justify-center items-center">
           <div className="flex gap-2 flex-col">
-            <h1 className="font-bold text-5xl">Warez Add Content</h1>
+            <h1 className="font-bold text-5xl min-w-[40vw] text-center">{!checked ? "Warez" : "TVS"} Add Content</h1>
+
+            <div className="flex  justify-end items-center gap-2">
+              <span
+                className={` text-sm  text-gray-900 dark:text-gray-300 ${
+                  !checked && "font-bold text-lg text-green-400"
+                }  `}
+              >
+                WAREZ
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  value=""
+                  checked={checked}
+                  className="sr-only peer"
+                  onChange={() => {
+                    setChecked(!checked);
+                  }}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-pink-600" />
+              </label>
+              <span
+                className={` text-sm  text-gray-900 dark:text-gray-300 ${
+                  checked && "font-bold text-lg text-pink-400"
+                }  `}
+              >
+                TVS
+              </span>
+            </div>
+
             <span className="text-xs">Powered by Eze</span>
             <span className="text-xs">@Versão 2.0.0</span>
           </div>
@@ -661,7 +706,6 @@ const M3UReader: React.FC = () => {
             const videoUrl = lines[1].trim();
             const fullLine = `#EXTINF:${episode}`;
             const isValid = isValidEntry(fullLine, contentName || "");
-            console.log(isValid);
             const formattedEpisodeInfo = () => {
               const match = episodeInfo.match(/S(\d+)\s*E(\d+)/);
 

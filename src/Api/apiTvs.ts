@@ -1,8 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 
 
-const api = axios.create({
-    baseURL: "http://149.56.205.234:1102/xuiWarez/",
+const apiTvs = axios.create({
+    baseURL: "http://149.56.205.234:5050/",
 });
 
 interface RequestCooldown {
@@ -30,7 +30,7 @@ const checkCooldownAndReject = (method: string, url: string): Promise<void> => {
     });
 };
 
-api.interceptors.request.use(async (config) => {
+apiTvs.interceptors.request.use(async (config) => {
     const { method, url } = config;
 
     if (method && url) {
@@ -44,7 +44,7 @@ api.interceptors.request.use(async (config) => {
     return config;
 });
 
-api.interceptors.response.use(
+apiTvs.interceptors.response.use(
     (response: AxiosResponse) => {
         const key = `${response.config.method?.toLowerCase()}_${response.config.url}`;
         requestCooldowns[key] = false;
@@ -61,4 +61,4 @@ api.interceptors.response.use(
     }
 );
 
-export default api;
+export default apiTvs;
