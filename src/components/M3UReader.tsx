@@ -11,6 +11,8 @@ interface iFile {
 
 const MIN_EPISODES_QUANTITY = 50;
 
+const SEASON_EP_PATTERN = /S(\d+) E(\d+)/;
+
 const extractContentName = (fileContent: string): string | null => {
   const matches = fileContent.match(/tvg-name="([^"]+)"/g);
 
@@ -19,8 +21,9 @@ const extractContentName = (fileContent: string): string | null => {
       const nameWithoutSeasonEpisode = match
         .replace('tvg-name="', "")
         .replace('"', "");
-      return nameWithoutSeasonEpisode.replace(/S\d{2} E\d{2}/, "").trim();
+      return nameWithoutSeasonEpisode.replace(SEASON_EP_PATTERN, "").trim();
     });
+    console.log(names, "names");
 
     const nameCounts: { [key: string]: number } = {};
 
@@ -72,7 +75,7 @@ const M3UReader: React.FC = () => {
   const [filesParts, setFilesParts] = useState<string[] | null>(null);
 
   const isValidEntry = (episodeInfo: string, contentName: string) => {
-    const regexCorretFormat = /S(\d+) E(\d+)/;
+    const regexCorretFormat = SEASON_EP_PATTERN;
 
     const sliptedLine = episodeInfo.split("group-title");
 
@@ -99,7 +102,7 @@ const M3UReader: React.FC = () => {
         };
   };
   const testAllFile = (episodeInfo: string, contentName: string): boolean => {
-    const regexCorretFormat = /S(\d+) E(\d+)/;
+    const regexCorretFormat = SEASON_EP_PATTERN;
     const sliptedLine = episodeInfo.split("group-title");
 
     const hasValidFormat =
@@ -289,7 +292,7 @@ const M3UReader: React.FC = () => {
         }
       });
 
-      if (uniqueEpisodes.length > 40) {
+      if (uniqueEpisodes.length > MIN_EPISODES_QUANTITY) {
         notify("Arquivo extenso detectado! Iniciando processo de fragmentação");
         splitFileIntoParts(fileContent, MIN_EPISODES_QUANTITY);
       }
@@ -408,6 +411,7 @@ const M3UReader: React.FC = () => {
     setContentName("");
     setErrorsIndexState([]);
     setActualErrorIndex(-1);
+    setFilesParts(null);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -585,7 +589,9 @@ const M3UReader: React.FC = () => {
                             onClick={() => saveToFile(piece)}
                             key={index}
                           >
-                            <span className="whitespace-nowrap">#PARTE {index + 1}</span>
+                            <span className="whitespace-nowrap">
+                              #PARTE {index + 1}
+                            </span>
                             Baixar arquivo
                           </a>
 

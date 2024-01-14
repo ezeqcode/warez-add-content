@@ -15,7 +15,7 @@ interface ModalUploadProps {
 const ModalUploadSchema = Yup.object().shape({
   id: Yup.string().required("O ID é obrigatório"),
 });
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const ModalUpload: React.FC<ModalUploadProps> = ({
   onClose,
@@ -50,18 +50,22 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
       for (let index = 0; index < file.length; index++) {
         const notifyPromise = new Promise(async (resolve, reject) => {
           try {
-            const result = await uploadFile(values.id, file[index].content, false);
-            
+            const result = await uploadFile(
+              values.id,
+              file[index].content,
+              false
+            );
+
             console.log(new Date());
-          
+
             resolve(result);
           } catch (error) {
             reject(error);
           }
         });
-        notify(`Parte ${index + 1}`, "promise", notifyPromise);
-        if(index !== file.length -2){
-          notify('Avançando para próxima etapa')
+        await notify(`Parte ${index + 1}`, "promise", notifyPromise);
+        if (index !== file.length - 2) {
+          notify("Avançando para próxima etapa");
         }
         await delay(3000);
       }
@@ -72,8 +76,8 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
   };
 
   return (
-    <div className="fixed  z-50 top-0  mx-auto w-full h-full flex justify-center items-center bg-white bg-opacity-60 ">
-      <div className="p-4 bg-white rounded-lg ">
+    <div className="fixed  z-50 top-0  mx-auto w-full h-full flex justify-center items-center bg-white bg-opacity-60  ">
+      <div className="p-4 bg-white rounded-lg max-w-[60vw] ">
         <h1 className="text-xl font-bold mb-2">{contentName}</h1>
         {file && !Array.isArray(file) && (
           <div className="mb-4">
@@ -88,71 +92,73 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
           onSubmit={onSubmitForm}
           validationSchema={ModalUploadSchema}
         >
-          <Form>
-            {fileParts && Array.isArray(fileParts) && (
-              <div className="flex flex-col gap-2">
-                <p className="font-semibold italic text-red-400 max-w-full">
-                  Obs: Seu arquivo foi fragmentado devido a <br /> quantidade de
-                  episódios. Não se preocupe!😉
-                </p>
-                <span>Selecione quais partes gostaria de fazer upload: </span>
-                <div className="flex gap-3 flex-wrap">
-                  {fileParts.map((part, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={part.isChecked}
-                        onChange={() => handleCheckboxChange(index)}
-                      />
-                      <span>
-                        <strong>Parte:</strong> {index + 1}
-                      </span>
-                    </div>
-                  ))}
+          {({ isSubmitting }) => (
+            <Form>
+              {fileParts && Array.isArray(fileParts) && (
+                <div className="flex flex-col gap-2">
+                  <p className="font-semibold italic text-red-400 max-w-full">
+                    Obs: Seu arquivo foi fragmentado devido a <br /> quantidade
+                    de episódios. Não se preocupe!😉
+                  </p>
+                  <span>Selecione quais partes gostaria de fazer upload: </span>
+                  <div className="flex gap-3 flex-wrap">
+                    {fileParts.map((part, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={part.isChecked}
+                          onChange={() => handleCheckboxChange(index)}
+                        />
+                        <span>
+                          <strong>Parte:</strong> {index + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+              <div className="mb-4 mt-2">
+                <label
+                  htmlFor="id"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  ID do Conteúdo
+                </label>
+                <Field
+                  type="text"
+                  id="id"
+                  name="id"
+                  // onChange={formik.handleChange}
+                  //onBlur={formik.handleBlur}
+                  //value={formik.values.id}
+                  className={`mt-1 p-2 border ${
+                    false ? "border-red-500" : "border-gray-300"
+                  } rounded-md`}
+                />
+                <ErrorMessage
+                  name="id"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
+                />
               </div>
-            )}
-            <div className="mb-4 mt-2">
-              <label
-                htmlFor="id"
-                className="block text-sm font-medium text-gray-700"
-              >
-                ID do Conteúdo
-              </label>
-              <Field
-                type="text"
-                id="id"
-                name="id"
-                // onChange={formik.handleChange}
-                //onBlur={formik.handleBlur}
-                //value={formik.values.id}
-                className={`mt-1 p-2 border ${
-                  false ? "border-red-500" : "border-gray-300"
-                } rounded-md`}
-              />
-              <ErrorMessage
-                name="id"
-                component="div"
-                className="text-red-500 text-sm mt-1"
-              />
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="mr-2 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                // disabled={formik.isSubmitting || !formik.isValid}
-              >
-                Postar Arquivo
-              </button>
-            </div>
-          </Form>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="mr-2 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Aguarde..." :  "Postar Arquivo"}
+                </button>
+              </div>
+            </Form>
+          )}
         </Formik>
       </div>
     </div>

@@ -26,7 +26,7 @@ const notify = (
       break;
     case "promise":
       if (!promise) return;
-      toast.promise(
+      return toast.promise(
         promise,
         {
           error: `Houve um erro ao processar a solicitação (${msg}). Por favor, tente novamente!`,
@@ -34,7 +34,7 @@ const notify = (
           pending: `Processando a solicitação (${msg})...`,
         }
       );
-      break;
+      
 
     default:
       toast.info(msg, {

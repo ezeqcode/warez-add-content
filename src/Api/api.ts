@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 
 
 const api = axios.create({
-    baseURL: "http://149.56.205.234:7070",
+    baseURL: "http://149.56.205.234:1102/xuiWarez/",
 });
 
 interface RequestCooldown {

@@ -8,7 +8,7 @@ export async function uploadFile(id: string, file: File, shouldNotify = true): P
         formData.append("id", id);
         formData.append("file", file);
 
-        const response = await api.post("/upload", formData, {
+        const response = await api.post("upload", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
@@ -19,9 +19,9 @@ export async function uploadFile(id: string, file: File, shouldNotify = true): P
         }
 
         return response;
-    } catch (error) {
-        // Manipule erros aqui
-        notify('Erro ao enviar arquivo', "error")
+    } catch (error: any) {
+        console.log(error.response.data)
+        notify(error.response.data.message || 'Erro ao enviar arquivo', "error")
 
         throw error;
     }
