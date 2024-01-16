@@ -586,7 +586,7 @@ const M3UReader: React.FC = () => {
             </div>
 
             <span className="text-xs">Powered by Eze</span>
-            <span className="text-xs">@Versão 2.0.0</span>
+            <span className="text-xs">@Versão 4.0.0</span>
           </div>
           {!fileContent && (
             <div className="w-full flex flex-col justify-center items-center gap-3">
