@@ -56,9 +56,9 @@ const M3UReader: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | FilePart[] | null>(
     null
   );
-  const [uploadedFileBackup, setUploadedFileBackup] = useState<File | FilePart[] | null>(
-    null
-  );
+  const [uploadedFileBackup, setUploadedFileBackup] = useState<
+    File | FilePart[] | null
+  >(null);
   const [videosEnabled, setVideosEnabled] = useState<{
     [key: number]: boolean;
   }>({});
@@ -75,7 +75,9 @@ const M3UReader: React.FC = () => {
   const [archiveInfo, setArchiveInfo] = useState<iFile | null>(null);
   const [actualErrorIndex, setActualErrorIndex] = useState<number>(-1);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [checked, setChecked] = React.useState(searchParams.get('destiny') === "tvs");
+  const [checked, setChecked] = React.useState(
+    searchParams.get("destiny") === "tvs"
+  );
   const [filesParts, setFilesParts] = useState<string[] | null>(null);
 
   const isValidEntry = (episodeInfo: string, contentName: string) => {
@@ -86,6 +88,8 @@ const M3UReader: React.FC = () => {
     const hasValidFormat =
       regexCorretFormat.test(sliptedLine[0]) &&
       regexCorretFormat.test(sliptedLine[1]);
+    const initialFormat = sliptedLine[0].match(regexCorretFormat);
+    const finalFormat = sliptedLine[1].match(regexCorretFormat);
     const regexQuote = /'/g;
     const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
@@ -96,13 +100,18 @@ const M3UReader: React.FC = () => {
       hasValidFormat,
       !hasUnclosedQuote
     );
-    return isInTvgName && isInEndOfLine && hasValidFormat && !hasUnclosedQuote
+    return isInTvgName &&
+      isInEndOfLine &&
+      hasValidFormat &&
+      !hasUnclosedQuote &&
+      initialFormat === finalFormat
       ? true
       : {
           isInTvgName,
           isInEndOfLine,
           hasValidFormat,
           hasUnclosedQuote,
+          endOfParts: initialFormat === finalFormat,
         };
   };
   const testAllFile = (episodeInfo: string, contentName: string): boolean => {
@@ -112,12 +121,14 @@ const M3UReader: React.FC = () => {
     const hasValidFormat =
       regexCorretFormat.test(sliptedLine[0]) &&
       regexCorretFormat.test(sliptedLine[1]);
+    const initialFormat = sliptedLine[0].match(regexCorretFormat);
+    const finalFormat = sliptedLine[1].match(regexCorretFormat);
     const regexQuote = /'/g;
     const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
 
-    return isInTvgName && isInEndOfLine && hasValidFormat && !hasUnclosedQuote;
+    return isInTvgName && isInEndOfLine && hasValidFormat && !hasUnclosedQuote && initialFormat === finalFormat ;
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -238,11 +249,10 @@ const M3UReader: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log("redo")
+    console.log("redo");
     const slicedItems = fileContent
       ? fileContent.split("#EXTINF:").slice(1)
       : [];
-
 
     const errorsIndex: number[] = [];
     const result = slicedItems.filter((episode, index) => {
@@ -296,7 +306,10 @@ const M3UReader: React.FC = () => {
         }
       });
 
-      if (uniqueEpisodes.length > MIN_EPISODES_QUANTITY && searchParams.get('destiny') === 'tvs') {
+      if (
+        uniqueEpisodes.length > MIN_EPISODES_QUANTITY &&
+        searchParams.get("destiny") === "tvs"
+      ) {
         notify("Arquivo extenso detectado! Iniciando processo de fragmentação");
         splitFileIntoParts(fileContent, MIN_EPISODES_QUANTITY);
       }
@@ -528,7 +541,9 @@ const M3UReader: React.FC = () => {
       <div className="relative  flex flex-col justify-center items-center py-3 gap-3 min-h-screen">
         <div className="flex flex-wrap gap-4 w-2/3 justify-center items-center">
           <div className="flex gap-2 flex-col">
-            <h1 className="font-bold text-5xl min-w-[40vw] text-center">{!checked ? "Warez" : "TVS"} Add Content</h1>
+            <h1 className="font-bold text-5xl min-w-[40vw] text-center">
+              {!checked ? "Warez" : "TVS"} Add Content
+            </h1>
 
             <div className="flex  justify-end items-center gap-2">
               <span
@@ -801,6 +816,12 @@ const M3UReader: React.FC = () => {
                         {!isValid.isInEndOfLine && (
                           <li>
                             Antes da url não foi encontrado o nome do conteúdo.
+                          </li>
+                        )}
+                        {!isValid.endOfParts && (
+                          <li>
+                            As partes inicial e final devem ser iguais para
+                            representar corretamente a série e temporada
                           </li>
                         )}
                       </ol>
