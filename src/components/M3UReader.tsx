@@ -90,6 +90,7 @@ const M3UReader: React.FC = () => {
       regexCorretFormat.test(sliptedLine[1]);
     const initialFormat = sliptedLine[0].match(regexCorretFormat);
     const finalFormat = sliptedLine[1].match(regexCorretFormat);
+    console.log(initialFormat, finalFormat);
     const regexQuote = /'/g;
     const hasUnclosedQuote = regexQuote.test(contentName);
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
@@ -104,14 +105,17 @@ const M3UReader: React.FC = () => {
       isInEndOfLine &&
       hasValidFormat &&
       !hasUnclosedQuote &&
-      initialFormat === finalFormat
+      initialFormat &&
+      finalFormat &&
+      initialFormat[0] === finalFormat[0]
       ? true
       : {
           isInTvgName,
           isInEndOfLine,
           hasValidFormat,
           hasUnclosedQuote,
-          endOfParts: initialFormat === finalFormat,
+          endOfParts:
+            initialFormat && finalFormat && initialFormat[0] === finalFormat[0],
         };
   };
   const testAllFile = (episodeInfo: string, contentName: string): boolean => {
@@ -128,7 +132,15 @@ const M3UReader: React.FC = () => {
     const isInTvgName = episodeInfo.includes(`tvg-name="${contentName}`);
     const isInEndOfLine = episodeInfo.includes(`,${contentName}`);
 
-    return isInTvgName && isInEndOfLine && hasValidFormat && !hasUnclosedQuote && initialFormat === finalFormat ;
+    return (
+      isInTvgName &&
+      isInEndOfLine &&
+      hasValidFormat &&
+      !hasUnclosedQuote &&
+      initialFormat !== null &&
+      finalFormat !== null &&
+      initialFormat[0] === finalFormat[0]
+    );
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
