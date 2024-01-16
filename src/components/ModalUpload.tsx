@@ -107,11 +107,11 @@ const ModalUpload: React.FC<ModalUploadProps> = ({
             <Form>
               {fileParts && fileParts.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="font-semibold italic text-red-400 text-center ">
+                  {/* <p className="font-semibold italic text-red-400 text-center ">
                     Obs: A fragmentação do arquivo é a melhor forma de lidar com
                     essa quantidade de episódios mas ainda pode apresentar
                     conteúdos duplicados
-                  </p>
+                  </p> */}
                   <span>Selecione quais partes gostaria de fazer upload: </span>
                   <div className="flex gap-3 flex-wrap">
                     {fileParts.map((part, index) => (

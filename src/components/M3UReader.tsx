@@ -10,7 +10,7 @@ interface iFile {
   episodes: number;
 }
 
-const MIN_EPISODES_QUANTITY = 50;
+const MIN_EPISODES_QUANTITY = 400;
 
 const SEASON_EP_PATTERN = /S(\d+) E(\d+)/;
 
@@ -319,8 +319,7 @@ const M3UReader: React.FC = () => {
       });
 
       if (
-        uniqueEpisodes.length > MIN_EPISODES_QUANTITY &&
-        searchParams.get("destiny") === "tvs"
+        uniqueEpisodes.length > MIN_EPISODES_QUANTITY
       ) {
         notify("Arquivo extenso detectado! Iniciando processo de fragmentação");
         splitFileIntoParts(fileContent, MIN_EPISODES_QUANTITY);

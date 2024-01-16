@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 
 
 const apiTvs = axios.create({
-    baseURL: "http://149.56.205.234:5050/",
+    baseURL: "http://149.56.205.234:1102/xuiTvs/",
 });
 
 interface RequestCooldown {
