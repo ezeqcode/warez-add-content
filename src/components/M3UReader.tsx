@@ -821,7 +821,7 @@ const M3UReader: React.FC = () => {
                         {!isValid.endOfParts && (
                           <li>
                             As partes inicial e final devem ser iguais para
-                            representar corretamente a série e temporada
+                            representar corretamente a temporada e episódio
                           </li>
                         )}
                       </ol>
