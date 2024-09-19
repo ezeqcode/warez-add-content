@@ -585,8 +585,7 @@ const M3UReader: React.FC = () => {
               </span>
             </div>
 
-            <span className="text-xs">Powered by Eze</span>
-            <span className="text-xs">@Versão 4.0.0</span>
+            <span className="text-xs">@Versão 4.2.0</span>
           </div>
           {!fileContent && (
             <div className="w-full flex flex-col justify-center items-center gap-3">
@@ -727,9 +726,9 @@ const M3UReader: React.FC = () => {
           {slicedItems.map((episode, index) => {
             const lines = episode
               .split("\n")
-              .filter((line) => line.trim() !== "");
-            const episodeInfo = lines[0].trim();
-            const videoUrl = lines[1].trim();
+              .filter((line) => line?.trim() !== "");
+            const episodeInfo = lines[0]?.trim();
+            const videoUrl = lines[1]?.trim();
             const fullLine = `#EXTINF:${episode}`;
             const isValid = isValidEntry(fullLine, contentName || "");
             const formattedEpisodeInfo = () => {
